@@ -1,21 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int Power(int num, int power)
+float Power(float num, int power)
 {
     if(power == 0)
         return 1;
 
-    int result = 1;
+    float result = 1;
     for(int x = 0; x < power; x++)
         result *= num;
 
     return result;
 }
 
-int ComputePolynomial(int degree, int *polynomial, int input)
+float ComputePolynomial(int degree, int *polynomial, float input)
 {
-    int result = 0;
+    float result = 0;
 
     for(int x = 0; x <= degree; x++)
         result += polynomial[x] * Power(input, degree - x);
@@ -35,8 +35,35 @@ void PrintPolynomial(int degree, int *polynomial)
     printf("\n");
 }
 
+float Abs(float a)
+{
+    return a * ((a >= 0) - (a < 0));
+}
+
+int TestForZero(int degree, int *polynomial, float startingIncrement, int iterations, int testFrom, float *zero)
+{
+    float increment = startingIncrement;
+    float point = (float)testFrom;
+
+    for(int x = 0; x < iterations; x++)
+    {
+        float up = Abs(ComputePolynomial(degree, polynomial, point + increment));
+        float down = Abs(ComputePolynomial(degree, polynomial, point - increment));
+        float difference = Abs(up - down);
+        increment = difference;
+
+        if(up < down)
+            point += increment;
+        else
+            point -= increment;
+    }
+}
+
 int FindZeroes(int degree, int *polynomial, int *zeroDest)
 {
+    if(degree < 1)
+        return 0;
+
     int zeroFound = 0;
     int zero;
 
