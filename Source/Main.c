@@ -1,5 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include "CollectionsPlus.h"
+
+int PrintPrecision = 2;
+
+ListDeclare(float);
+
+float Abs(float a)
+{
+    return a * ((a >= 0) - (a < 0));
+}
 
 float Power(float num, int power)
 {
@@ -13,7 +24,28 @@ float Power(float num, int power)
     return result;
 }
 
-float ComputePolynomial(int degree, int *polynomial, float input)
+int GetArg(const int argc, char **argv, const char *flag, char **argDest)
+{
+    for(int x = 0; x < argc; x++)
+    {
+        if(strcmp(argv[x], flag) != 0)
+            continue;
+
+        if(argDest != NULL)
+        {
+            if(argc > x + 1)
+                *argDest = argv[x + 1];
+            else
+                *argDest = "";
+        }
+        
+        return 1;
+    }
+
+    return 0;
+}
+
+float ComputePolynomial(int degree, float *polynomial, float input)
 {
     float result = 0;
 
@@ -23,125 +55,169 @@ float ComputePolynomial(int degree, int *polynomial, float input)
     return result;
 }
 
-void PrintPolynomial(int degree, int *polynomial)
+void PrintPolynomial(int degree, float *polynomial)
 {
     for(int x = 0; x <= degree; x++)
     {
-        printf("%dx%d", polynomial[x], degree - x);
+        printf("%.*fx%d", PrintPrecision, Abs(polynomial[x]), degree - x);
         if(x < degree)
-            printf(" + ");
+        {
+            if(polynomial[x + 1] > 0)
+                printf(" + ");
+            else
+                printf(" - ");
+        }
     }
 
     printf("\n");
 }
 
-float Abs(float a)
-{
-    return a * ((a >= 0) - (a < 0));
-}
-
-int TestForZero(int degree, int *polynomial, float startingIncrement, int iterations, int testFrom, float *zero)
+float TestForZero(int degree, float *polynomial, float startingIncrement, int iterations, float testFrom, float *zero)
 {
     float increment = startingIncrement;
-    float point = (float)testFrom;
+    float point = testFrom;
+    float distance = 1.0f;
+    int direction = 0;
 
     for(int x = 0; x < iterations; x++)
     {
+        if(distance == 0.0f)
+            break;
+
         float up = Abs(ComputePolynomial(degree, polynomial, point + increment));
         float down = Abs(ComputePolynomial(degree, polynomial, point - increment));
-        float difference = Abs(up - down);
-        increment = difference;
+        int oldDirection = direction;
 
         if(up < down)
+        {
+            distance = up;
             point += increment;
+            direction = 1;
+        }
         else
+        {
+            distance = down;
+            direction = -1;
             point -= increment;
+        }
+
+        if(oldDirection != 0 && oldDirection != direction)
+            increment /= 2;
     }
+
+    *zero = point;
+    return distance;
 }
 
-int FindZeroes(int degree, int *polynomial, int *zeroDest)
+int FindZeroes(int degree, float *polynomial, int zerosFound, float *zeroDest)
 {
     if(degree < 1)
         return 0;
 
     int zeroFound = 0;
-    int zero;
+    float zero;
 
-    for(int x = 0; x < 100; x++)
+    for(int x = 0; x < 50; x++)
     {
         int toTest = (x >> 1) * ((x % 2 == 1) - (x % 2 == 0));
-        int result = ComputePolynomial(degree, polynomial, toTest);
+        float distance = TestForZero(degree, polynomial, 0.5f, 100, (float)toTest, &zero);
 
-        if(result == 0)
+        if(distance < 0.01f)
         {
-           *zeroDest = toTest;
+           zeroDest[zerosFound] = zero;
            zeroFound = 1;
-           zero = toTest;
            break;
         }
+
+        AlreadyFound:
     }
 
     if(!zeroFound)
         return 0;
 
-    int newPolynomial[degree];
-    int nextValue = polynomial[0];
+    PrintPolynomial(degree, polynomial);
+
+    float newPolynomial[degree];
+    float nextValue = polynomial[0];
 
     for(int x = 0; x < degree; x++)
     {
-        int new = nextValue;
-        newPolynomial[x] = new;
-        nextValue = polynomial[x + 1] - new * (-zero);
+        newPolynomial[x] = nextValue;
+        nextValue = polynomial[x + 1] - nextValue * (-zero);
     }
 
-    PrintPolynomial(degree - 1, newPolynomial);
-
-    return FindZeroes(degree - 1, newPolynomial, zeroDest + 1) + 1;
+    return FindZeroes(degree - 1, newPolynomial, zerosFound + 1, zeroDest) + 1;
 }
 
 int main(int argc, char **argv)
 {
-    if(argc < 3)
+    if(argc < 2)
         return EXIT_FAILURE;
 
-    int degree;
-    if(sscanf(argv[1], "%d", &degree) < 1)
+    char *arg;
+    if(GetArg(argc, argv, "-h", NULL))
     {
-        printf("Invalid degree, aborting\n");
-        exit(EXIT_FAILURE);
+        printf(
+            "Factoriser [x^n[+ or -]x^n-1[+ or -]...] [-h] [-p [integer]]\n"
+            "   -h Prints this information\n"
+            "   -p [integer] Decimal precision of results\n"
+            "\n"
+            "Example use: Factoriser 1-2+1 -p 3\n"
+            "This would find the zeroes of the polynomial x^2-2x+1\n"
+        );
     }
 
-    int polynomial[degree + 1];
-    int zeros[degree];
+    if(GetArg(argc, argv, "-p", &arg))
+    {
+        int precision;
+        if(sscanf(arg, "%d", &precision) < 1)
+            printf("Failed to read precision");
+        else
+            PrintPrecision = precision;
+    }
 
-    char *polynomialArg = argv[2];
+    List(float) polynomial;
+    ListInit(&polynomial, 10);
+
+    char *polynomialArg = argv[1];
     int index = 0;
     
-    while(*polynomialArg != '\0' && index <= degree)
+    while(*polynomialArg != '\0')
     {
-        if(index != 0 && *polynomialArg != ',')
+        if(index != 0 && *polynomialArg != '+' && *polynomialArg != '-' || *polynomialArg == ' ')
         {
             polynomialArg++;
             continue;
         }
-        
+
+        float sign = 1;
+        if(*polynomialArg == '-')
+            sign = -1;
+
         if(index != 0)
             polynomialArg++;
 
-        int scanned = sscanf(polynomialArg, "%d", polynomial + index);
+        float coefficient;
+        int scanned = sscanf(polynomialArg, "%f", &coefficient);
+        coefficient *= sign; 
+        
         if(scanned < 1)
         {
             printf("Failed to read polynomial arg at index %d\n", index);
             exit(EXIT_FAILURE);
         }
 
+        ListAdd(&polynomial, &coefficient);
         index++;
     }
 
-    int found = FindZeroes(degree, polynomial, zeros);
+    float zeros[polynomial.Count - 1];
+    int found = FindZeroes(polynomial.Count - 1, polynomial.V, 0, zeros);
+
+    printf("Zeroes are: ");
 
     for(int x = 0; x < found; x++)
-        printf("%d, ", zeros[x]);
+        printf("%.*f, ", PrintPrecision, zeros[x]);
 
     printf("\n");
 }
