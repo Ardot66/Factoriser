@@ -5,7 +5,7 @@
 
 int PrintPrecision = 2;
 
-ListDeclare(float);
+ListDeclare(float, float);
 
 float Abs(float a)
 {
