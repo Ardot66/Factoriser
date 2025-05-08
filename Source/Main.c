@@ -2,19 +2,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include "CollectionsPlus.h"
-#include "Command.h"
-
-extern const Command PolynomialCommand;
+#include "Internal.h"
 
 const Command *Commands[] =
 {
-    &PolynomialCommand
+    &PolynomialCommand,
+    &HelpCommand
 };
 
 const size_t CommandCount = sizeof(Commands) / sizeof(*Commands);
 
 int main(int argc, char **argv)
 {
+    HelpCommandList = Commands;
+    HelpCommandListCount = CommandCount;
+
     const Command *command = NULL;
     if(argc > 1)
         command = FindCommand(Commands, CommandCount, argv[1]);
