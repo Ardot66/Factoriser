@@ -4,21 +4,11 @@
 #include "CollectionsPlus.h"
 #include "Command.h"
 
-int SolvePolynomial(int argc, char **argv);
+extern const Command PolynomialCommand;
 
-const Command Commands[] = 
+const Command *Commands[] =
 {
-    CommandInit(
-        "polynomial poly", 
-        SolvePolynomial, 
-        "[x^n[+ or -]x^n-1[+ or -]...] [-h] [-p [integer]]",
-        "\n"
-        "%i-h%pPrints this information\n"
-        "%i-p%p[integer] Decimal precision of results\n"
-        "\n"
-        "Example use: Factoriser 1-2+1 -p 3\n"
-        "This would find the zeroes of the polynomial x^2-2x+1\n"
-    )
+    &PolynomialCommand
 };
 
 const size_t CommandCount = sizeof(Commands) / sizeof(*Commands);

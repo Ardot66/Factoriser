@@ -135,18 +135,6 @@ int SolvePolynomial(int argc, char **argv)
         return EXIT_FAILURE;
 
     char *arg;
-    if(FindArg(argc, argv, "-h", NULL))
-    {
-        printf(
-            "Factoriser [x^n[+ or -]x^n-1[+ or -]...] [-h] [-p [integer]]\n"
-            "   -h Prints this information\n"
-            "   -p [integer] Decimal precision of results\n"
-            "\n"
-            "Example use: Factoriser 1-2+1 -p 3\n"
-            "This would find the zeroes of the polynomial x^2-2x+1\n"
-        );
-    }
-
     if(FindArg(argc, argv, "-p", &arg))
     {
         int precision;
@@ -202,3 +190,15 @@ int SolvePolynomial(int argc, char **argv)
     printf("\n");
     return EXIT_SUCCESS;
 }
+
+const Command PolynomialCommand = CommandInit(
+    "polynomial poly", 
+    SolvePolynomial, 
+    "[x^n[+ or -]x^n-1[+ or -]...] [-h] [-p [integer]]",
+    "\n"
+    "%i-h%pPrints this information\n"
+    "%i-p%p[integer] Decimal precision of results\n"
+    "\n"
+    "Example use: Factoriser 1-2+1 -p 3\n"
+    "This would find the zeroes of the polynomial x^2-2x+1\n"
+);
