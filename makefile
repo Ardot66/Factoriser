@@ -12,6 +12,7 @@ HEADERS_WILDCARD = ../*/Header
 HEADERS := $(subst $() , -I , $(wildcard $(HEADERS_WILDCARD)))
 
 All: $(EXE)
+	$(EXE) sim $(ARGS)
 
 $(EXE): $(SOURCE) $(HEADERS_WILDCARD)/*
 	gcc $(SOURCE) $(HEADERS) -L$(BIN) $(subst $() , -l,$(DEPEND)) -o $(EXE)

@@ -7,7 +7,8 @@
 const Command *Commands[] =
 {
     &PolynomialCommand,
-    &HelpCommand
+    &HelpCommand,
+    &SimplifyCommand
 };
 
 const size_t CommandCount = sizeof(Commands) / sizeof(*Commands);
