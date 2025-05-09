@@ -24,4 +24,6 @@ int main(int argc, char **argv)
 
     if(command != NULL)
         return command->Command(argc - 2, argv + 2);
+
+    return EXIT_SUCCESS;
 }

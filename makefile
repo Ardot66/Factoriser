@@ -1,9 +1,10 @@
-SHELL = cmd
+SHELL = bash
 
 DEPEND = $() CollectionsPlus Try Command
-BIN = ../Bin
-HEADER = Header
-SOURCE = Source/*
+DLL_BIN = ../Bin
+BIN = Bin
+SOURCE = Source/*.c
+TESTS = Tests/*.c
 NAME = Factoriser
 
 EXE := $(BIN)/$(NAME).exe
@@ -11,11 +12,20 @@ EXE := $(BIN)/$(NAME).exe
 HEADERS_WILDCARD = ../*/Header
 HEADERS := $(subst $() , -I , $(wildcard $(HEADERS_WILDCARD)))
 
-All: $(EXE)
-	$(EXE) sim $(ARGS)
+Debug: COMPILE_FLAGS = -g
+Debug: Compile
 
-$(EXE): $(SOURCE) $(HEADERS_WILDCARD)/*
-	gcc $(SOURCE) $(HEADERS) -L$(BIN) $(subst $() , -l,$(DEPEND)) -o $(EXE)
+Release: COMPILE_FLAGS = -s
+Release: Compile
+
+Debugger: RUN = gdb $(EXE)
+Debugger: Debug
+
+Compile: $(EXE)
+	$(RUN)
+
+$(EXE): $(SOURCE) $(HEADERS_WILDCARD)/*.h
+	gcc $(COMPILE_FLAGS) $(SOURCE) $(HEADERS) -L$(DLL_BIN) $(subst $() , -l,$(DEPEND)) -o $(EXE)
 
 Clean:
-	del /Q $(subst /,\,$(EXE))
+	rm $(TESTS_EXE) $(EXE)
